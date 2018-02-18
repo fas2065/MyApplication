@@ -28,8 +28,11 @@ public class LightShow extends View {
         Paint paint = new Paint();
         paint.setStyle(Paint.Style.FILL);
 
-        if (roll < 0) {
+        if (roll < -10) {
             paint.setColor(Color.RED);
+//            LogUtil.i("Negative roll: " + roll);
+        } else if (roll > -10 && roll < 10) {
+            paint.setColor(Color.WHITE);
 //            LogUtil.i("Negative roll: " + roll);
         } else {
             paint.setColor(Color.BLUE);

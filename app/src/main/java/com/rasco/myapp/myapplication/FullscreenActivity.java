@@ -1,18 +1,31 @@
 package com.rasco.myapp.myapplication;
 
 import android.annotation.SuppressLint;
+import android.content.ContentResolver;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.provider.Settings;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.widget.EditText;
+import android.widget.Toast;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class FullscreenActivity extends AppCompatActivity implements Orientation.Listener{
+public class FullscreenActivity extends AppCompatActivity implements Orientation.Listener {
+
+
+    private Boolean firstTime;
     /**
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
@@ -32,7 +45,7 @@ public class FullscreenActivity extends AppCompatActivity implements Orientation
     private static final int UI_ANIMATION_DELAY = 300;
     private final Handler mHideHandler = new Handler();
     private View mContentView;
-//    private final Runnable mHidePart2Runnable = new Runnable() {
+    //    private final Runnable mHidePart2Runnable = new Runnable() {
 //        @SuppressLint("InlinedApi")
 //        @Override
 //        public void run() {
@@ -96,7 +109,13 @@ public class FullscreenActivity extends AppCompatActivity implements Orientation
         mVisible = true;
         mControlsView = findViewById(R.id.fullscreen_content_controls);
         mContentView = findViewById(R.id.fullscreen_content);
-
+        try {
+            Settings.System.putInt(this.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, 100);
+        } catch(SecurityException se) {
+//            if (isFirstTime()) {
+                alertForWritePermission();
+//            }
+        }
 
         // Set up the user interaction to manually show or hide the system UI.
 //        mContentView.setOnClickListener(new View.OnClickListener() {
@@ -168,7 +187,7 @@ public class FullscreenActivity extends AppCompatActivity implements Orientation
 
         // Schedule a runnable to display UI elements after a delay
 //        mHideHandler.removeCallbacks(mHidePart2Runnable);
-        mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
+        //mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
     }
 
     /**
@@ -179,4 +198,42 @@ public class FullscreenActivity extends AppCompatActivity implements Orientation
         mHideHandler.removeCallbacks(mHideRunnable);
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
     }
+
+    private void alertForWritePermission() {
+        AlertDialog.Builder adb = new AlertDialog.Builder(this);
+        adb.setTitle("Maximize Brightness");
+        adb.setMessage("Please manually maximize your screen brightness manually or change Settings Permissions so that this app can do it for you.");
+//        adb.setIcon(android.R.drawable.ic_dialog_alert);
+        adb.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
+                startActivity(intent);
+            } });
+        adb.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+
+                finish();
+            } });
+        adb.show();
+    }
+
+
+    /**
+     * Checks if the user is opening the app for the first time.
+     * Note that this method should be placed inside an activity and it can be called multiple times.
+     * @return boolean
+     */
+    private boolean isFirstTime() {
+        if (firstTime == null) {
+            SharedPreferences mPreferences = this.getSharedPreferences("first_time", Context.MODE_PRIVATE);
+            firstTime = mPreferences.getBoolean("firstTime", true);
+            if (firstTime) {
+                SharedPreferences.Editor editor = mPreferences.edit();
+                editor.putBoolean("firstTime", false);
+                editor.commit();
+            }
+        }
+        return firstTime;
+    }
+
 }
